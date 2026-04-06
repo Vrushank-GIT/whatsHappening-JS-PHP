@@ -12,7 +12,8 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
   // Query the database to get the group name
   require_once 'functions.php';
   $connect = db_connect();
-  $query = "SELECT GroupName FROM groups WHERE GroupID = $groupID";
+  // ADDED BACKTICKS AROUND `groups`
+  $query = "SELECT GroupName FROM `groups` WHERE GroupID = $groupID";
   $result = mysqli_query($connect, $query);
   
   if(mysqli_num_rows($result) > 0) {
@@ -146,7 +147,9 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
             if (isset($_POST['submit'])) {
                 $name = clean_text($_POST['group_name']);
                 $groupId = '';
-                $sql = "SELECT * FROM groups WHERE GroupName = ?;";
+                
+                // ADDED BACKTICKS AROUND `groups`
+                $sql = "SELECT * FROM `groups` WHERE GroupName = ?;";
                 // Prepare the statement
                 $stmt = $connect->prepare($sql);
 
@@ -220,7 +223,9 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
                         echo "Error: " . $sql . "<br>" . $conn->error;
                     }
                     $error = 'Event successfully posted.';
-                    header('Location:http://localhost/events.php');
+                    
+                    // FIXED REDIRECTION URL TO WORK ON LOCALHOST:8888
+                    header('Location: events.php');
                     exit();
                 }
                 
@@ -245,7 +250,7 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
                 </div>
             </div>
             <div class="text-center">
-                <a><strong><?php echo $groupName !== "" ? $groupName : ''; ?></strong></a>
+                <a><strong><?php echo $groupName !== "" ? htmlspecialchars($groupName) : ''; ?></strong></a>
             </div>
             <div class="form mt-5">
                 <form method="post" action="post.php" role="form">
@@ -326,14 +331,10 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
         <div class="row justify-content-between">
           <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
             <div class="copyright">
-              � Copyright <strong><span>ZenBlog</span></strong>. All Rights Reserved
+              © Copyright <strong><span>ZenBlog</span></strong>. All Rights Reserved
             </div>
 
             <div class="credits">
-              <!-- All the links in the footer should remain intact. -->
-              <!-- You can delete the links only if you purchased the pro version. -->
-              <!-- Licensing information: https://bootstrapmade.com/license/ -->
-              <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/herobiz-bootstrap-business-template/ -->
               Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
             </div>
 

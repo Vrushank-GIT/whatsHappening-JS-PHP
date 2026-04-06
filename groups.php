@@ -137,7 +137,7 @@ require_once 'functions.php';
 $connect = db_connect();
 
 //fetch groups data from gropus table
-$sql = "SELECT * FROM groups";
+$sql = "SELECT * FROM `groups`";
 
 $groupsData = $connect->query($sql);
 

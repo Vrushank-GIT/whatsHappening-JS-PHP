@@ -81,7 +81,23 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     if(empty(trim($_POST["username"]))){
         $username_err = "Please enter username.";
     } else{
-        $username = trim($_POST["username"]);
+        // Check database to see if username already exists
+        $sql = "SELECT AccountID FROM `login` WHERE Username = ?";
+        if($stmt = mysqli_prepare($connect, $sql)){
+            $param_username = trim($_POST["username"]);
+            mysqli_stmt_bind_param($stmt, "s", $param_username);
+            
+            if(mysqli_stmt_execute($stmt)){
+                mysqli_stmt_store_result($stmt);
+                
+                if(mysqli_stmt_num_rows($stmt) == 1){
+                    $username_err = "This username is already taken. Please choose another.";
+                } else{
+                    $username = trim($_POST["username"]);
+                }
+            }
+            mysqli_stmt_close($stmt);
+        }
     }
 
     // Validate password
@@ -100,8 +116,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         
       $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
       
-      // Prepare an insert statement for Groups table
-        $insertGroupQuery = "INSERT INTO Groups (GroupName, GroupImage, GroupType, GroupDesc, ContactName, ContactEmail) VALUES (?, ?, ?, ?, ?, ?)";
+      // Prepare an insert statement for Groups table (ADDED BACKTICKS)
+        $insertGroupQuery = "INSERT INTO `groups` (GroupName, GroupImage, GroupType, GroupDesc, ContactName, ContactEmail) VALUES (?, ?, ?, ?, ?, ?)";
 
         if($insertGroupStmt = mysqli_prepare($connect, $insertGroupQuery)){
             // Bind variables to the prepared statement as parameters
@@ -115,8 +131,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 // Close statement
                 mysqli_stmt_close($insertGroupStmt);
 
-                    // Prepare an insert statement for Login table
-                $insertLoginQuery = "INSERT INTO Login (GroupID, Username, Password) VALUES (?, ?, ?)";
+                    // Prepare an insert statement for Login table (ADDED BACKTICKS)
+                $insertLoginQuery = "INSERT INTO `login` (GroupID, Username, Password) VALUES (?, ?, ?)";
                 if($insertLoginStmt = mysqli_prepare($connect, $insertLoginQuery)){
 
                     // Bind variables to the prepared statement as parameters
@@ -271,29 +287,37 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
            <h4>Tell us about your group:</h4> 
           <div class="form-group">
             <input type="text" name="group_name" class="form-control" id="group_name" placeholder="Your Community Group" required>
+            <span style="color: red; font-size: 14px;"><?php echo $groupName_err; ?></span>
           </div>
           <div class="form-group">
             <input type="text" name="group_type" class="form-control" id="group_type" placeholder="What type of group are you?" required>
+            <span style="color: red; font-size: 14px;"><?php echo $groupType_err; ?></span>
           </div>
           <div class="form-group">
             <input type="text" name="contact_name" class="form-control" id="contact_name" placeholder="Provide a Contact Name for your group" required>
+            <span style="color: red; font-size: 14px;"><?php echo $contactName_err; ?></span>
           </div>
           <div class="form-group">
             <input type="email" name="contact_email" class="form-control" id="contact_email" placeholder="Provide a Contact Email for your group" required>
+            <span style="color: red; font-size: 14px;"><?php echo $contactEmail_err; ?></span>
           </div>
           <div class="form-group">
             <input type="text" name="image_name" class="form-control" id="image_name" placeholder="Group Image Name" required>
+            <span style="color: red; font-size: 14px;"><?php echo $imageName_err; ?></span>
           </div>
           <div class="form-group">
             <textarea class="form-control" name="group_description" rows="5" placeholder="Tell us about your group" required></textarea>
+            <span style="color: red; font-size: 14px;"><?php echo $groupDesc_err; ?></span>
           </div>
           <br></br>
           <h4>Create Account:</h4>
           <div class="form-group">
             <input type="text" name="username" class="form-control" id="username" placeholder="Create Username" required>
+            <span style="color: red; font-size: 14px;"><?php echo $username_err; ?></span>
           </div>
           <div class="form-group">
             <input type="password" name="password" class="form-control" id="password" placeholder="Create Password" required>
+            <span style="color: red; font-size: 14px;"><?php echo $password_err; ?></span>
           </div>
           <br></br>
           <div class="text-center"><button name="submit" type="submit" id="submit" style="background-color: green;">submit</button></div>

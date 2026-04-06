@@ -182,7 +182,7 @@ if (isset($_POST['submit'])) {
             </div>
 
             <div class="form mt-5">
-                <form action="Login.php" method="post" role="form">
+                <form action="login.php" method="post" role="form">
                         <div class="form-group">
                             <input type="text" name="username" class="form-control" id="username" placeholder="Your Username" require>
                         </div>

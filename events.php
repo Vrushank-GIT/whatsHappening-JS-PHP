@@ -38,14 +38,6 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
   <!-- Template Main CSS Files -->
   <link href="assets/css/variables.css" rel="stylesheet">
   <link href="assets/css/main.css" rel="stylesheet">
-
-  <!-- =======================================================
-  * Template Name: ZenBlog
-  * Updated: Jan 29 2024 with Bootstrap v5.3.2
-  * Template URL: https://bootstrapmade.com/zenblog-bootstrap-blog-template/
-  * Author: BootstrapMade.com
-  * License: https:///bootstrapmade.com/license/
-  ======================================================== -->
 </head>
 
 <body>
@@ -55,8 +47,6 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
     <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
 
       <a href="index.php" class="logo d-flex align-items-center">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.png" alt=""> -->
         <h1>What's Happening</h1>
       </a>
 
@@ -116,77 +106,73 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
           <div class="col-md-9" data-aos="fade-up">
             <h3 class="category-title">Event Category: ALL</h3>
 
-<?php
+            <?php
+            // connection with database
+            require_once 'functions.php';
+            $connect = db_connect();
 
-// connection with database
-  require_once 'functions.php';
-  $connect = db_connect();
+            //query for fectching the data from the database
+            $JoinSql = "
+            SELECT 
+                events.*, 
+                eventtypes.TypeName AS eventType, 
+                `groups`.GroupName, 
+                `groups`.GroupImage  
+            FROM 
+                events 
+            LEFT JOIN 
+                eventtypes ON eventtypes.EventTypeID = events.EventTypeID
+            LEFT JOIN 
+                `groups` ON `groups`.GroupID = events.GroupID
+            WHERE
+                events.EventDate >= CURDATE()
+            ORDER BY
+                EventDate ASC;";  
 
-  //query for fectching the data from the database
-  $JoinSql = "
-  SELECT 
-      events.*, 
-      eventtypes.TypeName AS eventType, 
-      groups.GroupName, 
-      groups.GroupImage  
-  FROM 
-      events 
-  LEFT JOIN 
-      eventtypes ON eventtypes.EventTypeID = events.EventTypeID
-  LEFT JOIN 
-      groups ON groups.GroupID = events.GroupID
-  WHERE
-      events.EventDate >= CURDATE()
-  ORDER BY
-      EventDate ASC;";  
+            $allData = $connect->query($JoinSql);
+            
+            $selectedType = isset($_GET['event_type']) ? urlencode(filter_input(INPUT_GET, 'event_type')): 'all';
+            
+            // Display the event category
+            $displayType = $selectedType !== 'all' ? htmlspecialchars($selectedType) : 'All';
+            echo "<h2>Event Category: " . $displayType . "</h2>";
+            
+            if($allData && $allData->num_rows > 0) {
+              while($event = $allData->fetch_assoc()){
+                $eventNum = $event["EventID"];
+                $eventGroupType = $event["eventType"];
+                $eventDate = $event["EventDate"];
+                $eventTitle =  $event["EventTitle"];
+                $eventImagePath = $event["EventImage"];
+                $groupName = $event['GroupName'];
+                $groupImage = $event['GroupImage'];
 
-  $allData = $connect->query($JoinSql);
-  
-  $selectedType = isset($_GET['event_type']) ? urlencode(filter_input(INPUT_GET, 'event_type')): 'all';
-  // Display the event category
-  echo "<h2>Event Category: " . htmlspecialchars($selectedType !== 'all' ? $selectedType : 'All') . "</h2>";
-  if($allData->num_rows > 0) {
-    while($event = $allData->fetch_assoc()){
-      $eventNum = $event["EventID"];
-      $eventGroupID = $event["GroupName"];
-      $eventGroupType = $event["eventType"];
-      $eventDate = $event["EventDate"];
-      $eventTitle =  $event["EventTitle"];
-      $eventDescription = $event["EventDesc"];
-      $eventImagePath = $event["EventImage"];
-      $groupName = $event['GroupName'];
-      $groupImage = $event['GroupImage'];
-
-      if ($selectedType !== 'all' && strtolower($eventGroupType) !== strtolower($selectedType)) {
-        continue;
-      }
-
-          // Generate the HTML for each event
-          echo <<<HTML
-          <div class="d-md-flex post-entry-2 half">
-              <a href="single-post.php?event_id={$eventNum}" class="me-4 thumbnail">
-                  <img src="{$eventImagePath}" alt="" class="img-fluid">
-              </a>
-              <div>
-                  <div class="post-meta"><span class="date">{$eventGroupType}</span> <span class="mx-1">&bullet;</span> <span>{$eventDate}</span></div>
-                  <h3><a href="single-post.php?event_id={$eventNum}">{$eventTitle}</a></h3>
-                  <div class="d-flex align-items-center author">
-                      <div class="photo"><img src="{$groupImage}" alt="" class="img-fluid"></div>
-                      <div class="name">
-                          <h3 class="m-0 p-0">{$groupName}</h3>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      HTML;
-    }
-  }
-  else {
-    echo "No events";
-  }
-  // colse connection
-?>
-          
+                if ($selectedType !== 'all' && strtolower($eventGroupType) !== strtolower($selectedType)) {
+                  continue;
+                }
+            ?>
+                <!-- Generate HTML cleanly -->
+                <div class="d-md-flex post-entry-2 half">
+                    <a href="single-post.php?event_id=<?php echo $eventNum; ?>" class="me-4 thumbnail">
+                        <img src="<?php echo $eventImagePath; ?>" alt="" class="img-fluid">
+                    </a>
+                    <div>
+                        <div class="post-meta"><span class="date"><?php echo $eventGroupType; ?></span> <span class="mx-1">&bullet;</span> <span><?php echo $eventDate; ?></span></div>
+                        <h3><a href="single-post.php?event_id=<?php echo $eventNum; ?>"><?php echo $eventTitle; ?></a></h3>
+                        <div class="d-flex align-items-center author">
+                            <div class="photo"><img src="<?php echo $groupImage; ?>" alt="" class="img-fluid"></div>
+                            <div class="name">
+                                <h3 class="m-0 p-0"><?php echo $groupName; ?></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php
+              }
+            } else {
+              echo "<p>No upcoming events found.</p>";
+            }
+            ?>
           </div>
 
           <div class="col-md-3">
@@ -200,7 +186,6 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
                 <li class="nav-item" role="presentation">
                   <button class="nav-link" id="pills-trending-tab" data-bs-toggle="pill" data-bs-target="#pills-trending" type="button" role="tab" aria-controls="pills-trending" aria-selected="false">Latest Added</button>
                 </li>
-               
               </ul>
 
               <div class="tab-content" id="pills-tabContent">
@@ -208,27 +193,16 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
                 <!-- Popular -->
                 <div class="tab-pane fade show active" id="pills-popular" role="tabpanel" aria-labelledby="pills-popular-tab">
                 <?php 
-                  
-                  //get the data from recent submmited date events
-                  $JoinSql = "  SELECT 
-                  events.*, 
-                  eventtypes.TypeName AS eventType, 
-                  groups.GroupName, 
-                  groups.GroupImage  
-              FROM 
-                  events 
-              LEFT JOIN 
-                  eventtypes ON eventtypes.EventTypeID = events.EventTypeID
-              LEFT JOIN 
-                  groups ON groups.GroupID = events.GroupID
-              WHERE
-                  events.EventDate >= CURDATE()
-              ORDER BY
-                  EventDate ASC
-              LIMIT 5;";  
+                  $JoinSql = "SELECT events.*, eventtypes.TypeName AS eventType, `groups`.GroupName 
+                              FROM events 
+                              LEFT JOIN eventtypes ON eventtypes.EventTypeID = events.EventTypeID
+                              LEFT JOIN `groups` ON `groups`.GroupID = events.GroupID
+                              WHERE events.EventDate >= CURDATE()
+                              ORDER BY EventDate ASC
+                              LIMIT 5;";  
 
                   $allData = $connect->query($JoinSql);
-                  if($allData->num_rows > 0) {
+                  if($allData && $allData->num_rows > 0) {
                     while($row = $allData->fetch_assoc()) {
                       $eventTitle =  $row["EventTitle"];
                       $eventDate = $row["EventDate"];
@@ -236,47 +210,33 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
                       $formattedDate = date_format(date_create($eventDate), "d-F-y");
                       $eventType = $row["eventType"];
                       $groupType = $row["GroupName"];
-                      echo <<<HTML
-                      
-                        <div class="post-entry-1 border-bottom" ><a href="single-post.php?event_id={$eventNum}">
-                          <div class="post-meta"><span class="date">$eventType</span> <span class="mx-1">&bullet;</span> <span>$formattedDate</span></div>
-                          <h2 class="mb-2"><a href="single-post.php?event_id={$eventNum}">$eventTitle</a></h2>
-                          <span class="author mb-3 d-block">$groupType</span>
-                          </a>
-                        </div>
-                      HTML;
+                ?>
+                      <div class="post-entry-1 border-bottom">
+                          <div class="post-meta"><span class="date"><?php echo $eventType; ?></span> <span class="mx-1">&bullet;</span> <span><?php echo $formattedDate; ?></span></div>
+                          <h2 class="mb-2"><a href="single-post.php?event_id=<?php echo $eventNum; ?>"><?php echo $eventTitle; ?></a></h2>
+                          <span class="author mb-3 d-block"><?php echo $groupType; ?></span>
+                      </div>
+                <?php
                     }
-                  }else{
-                    echo "No result";
+                  } else {
+                    echo "<p>No results</p>";
                   }
-              
                 ?>
                 </div> <!-- End Popular -->
 
                 <!-- Trending -->
                 <div class="tab-pane fade" id="pills-trending" role="tabpanel" aria-labelledby="pills-trending-tab">
                 <?php 
-                  
-                  //get the data from recent submmited date events
-                  $JoinSql = "  SELECT 
-                  events.*, 
-                  eventtypes.TypeName AS eventType, 
-                  groups.GroupName, 
-                  groups.GroupImage  
-              FROM 
-                  events 
-              LEFT JOIN 
-                  eventtypes ON eventtypes.EventTypeID = events.EventTypeID
-              LEFT JOIN 
-                  groups ON groups.GroupID = events.GroupID
-              WHERE
-                  events.EventDate >= CURDATE()
-              ORDER BY
-                  SubmitDate DESC
-              LIMIT 5;";  
+                  $JoinSql = "SELECT events.*, eventtypes.TypeName AS eventType, `groups`.GroupName 
+                              FROM events 
+                              LEFT JOIN eventtypes ON eventtypes.EventTypeID = events.EventTypeID
+                              LEFT JOIN `groups` ON `groups`.GroupID = events.GroupID
+                              WHERE events.EventDate >= CURDATE()
+                              ORDER BY SubmitDate DESC
+                              LIMIT 5;";  
 
                   $allData = $connect->query($JoinSql);
-                  if($allData->num_rows > 0) {
+                  if($allData && $allData->num_rows > 0) {
                     while($row = $allData->fetch_assoc()) {
                       $eventTitle =  $row["EventTitle"];
                       $eventDate = $row["EventDate"];
@@ -284,27 +244,22 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
                       $formattedDate = date_format(date_create($eventDate), "d-F-y");
                       $eventType = $row["eventType"];
                       $groupType = $row["GroupName"];
-                      echo <<<HTML
-                        <div class="post-entry-1 border-bottom"><a href="single-post.php?event_id={$eventNum}">
-                          <div class="post-meta"><span class="date">$eventType</span> <span class="mx-1">&bullet;</span> <span>$formattedDate</span></div>
-                          <h2 class="mb-2"><a href="single-post.php?event_id={$eventNum}">$eventTitle</a></h2>
-                          <span class="author mb-3 d-block">$groupType</span>
-                          </a>
-                        </div>
-                      HTML;
+                ?>
+                      <div class="post-entry-1 border-bottom">
+                          <div class="post-meta"><span class="date"><?php echo $eventType; ?></span> <span class="mx-1">&bullet;</span> <span><?php echo $formattedDate; ?></span></div>
+                          <h2 class="mb-2"><a href="single-post.php?event_id=<?php echo $eventNum; ?>"><?php echo $eventTitle; ?></a></h2>
+                          <span class="author mb-3 d-block"><?php echo $groupType; ?></span>
+                      </div>
+                <?php
                     }
-                  }else{
-                    echo "No result";
+                  } else {
+                    echo "<p>No results</p>";
                   }
                   $connect->close();
                 ?>
-                  
-                  
                 </div> <!-- End Trending -->
 
-                </div> <!-- End Latest -->
-
-              </div>
+              </div> <!-- End Tab Content -->
             </div>
 
             <div class="aside-block">
@@ -387,10 +342,6 @@ if(!isset($_SESSION["login"]) || $_SESSION["login"] !== true){
             </div>
 
             <div class="credits">
-              <!-- All the links in the footer should remain intact. -->
-              <!-- You can delete the links only if you purchased the pro version. -->
-              <!-- Licensing information: https://bootstrapmade.com/license/ -->
-              <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/herobiz-bootstrap-business-template/ -->
               Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
             </div>
 
